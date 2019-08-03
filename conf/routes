@@ -3,12 +3,43 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# An example controller showing a sample home page
-GET     /                           controllers.HomeController.index
-# An example controller showing how to use dependency injection
-GET     /count                      controllers.CountController.count
-# An example controller showing how to write asynchronous code
-GET     /message                    controllers.AsyncController.message
-
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+
+#swagger.json
+GET     /swagger.json        controllers.ApiHelpController.getResources
+GET     /docs/               controllers.Assets.at(path="/public/swagger",file="index.html")
+GET     /docs/*file          controllers.Assets.at(path="/public/swagger",file)
+
+
+#------------------------ Routes ------------------------------------
+
+# create garages
+POST    /garages                    controllers.GaragesController.post
+
+#update garages
+PUT     /garages/:id                 controllers.GaragesController.putOneGaragesById(id: String)
+
+#delete a garages
+DELETE  /garages/:id                controllers.GaragesController.deleteOneGaragesById(id: String)
+
+#get a garages
+GET     /garages/:id                 controllers.GaragesController.getOneGaragesById(id: String)
+
+#create cars
+POST    /cars                       controllers.CarsController.post
+
+#update a cars
+PUT     /cars/:id                   controllers.CarsController.putOneCarsById(id: String)
+
+#delete a cars
+DELETE  /cars/:id                   controllers.CarsController.deleteOneCarsById(id: String)
+
+#delete all cars
+DELETE  /cars                       controllers.CarsController.deleteAllCars
+
+#get a cars
+GET     /cars/:id                   controllers.CarsController.getOneCardById(id: String)
+
+#get all cars
+GET     /cars                       controllers.CarsController.getAllCars
