@@ -1,11 +1,40 @@
 package controllers
 
+import java.util.Date
+
+import DAO.Cars
 import io.swagger.annotations._
 import javax.inject.Inject
 import play.api.mvc.{AbstractController, ControllerComponents}
+import play.libs.Json
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 @Api
 class CarsController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
+
+  implicit val carsWrites: Writes[Cars] = (
+    (JsPath \ "id").write[Int] and
+      (JsPath \ "registration").write[String] and
+      (JsPath \ "brand").write[String] and
+      (JsPath \ "model").write[String] and
+      (JsPath \ "color").write[String] and
+      (JsPath \ "date_commissioning").write[java.util.Date] and
+      (JsPath \ "price").write[Float]
+    )(unlift(Cars.unapply))
+
+  implicit val carsReaders: Reads[Cars] = (
+    (JsPath \ "id").read[Int] and
+      (JsPath \ "registration").read[String] and
+      (JsPath \ "brand").read[String] and
+      (JsPath \ "model").read[String] and
+      (JsPath \ "color").read[String] and
+      (JsPath \ "date_commissioning").read[java.util.Date] and
+      (JsPath \ "price").read[Float]
+    )(unlift(Cars.unapply))
+
+
+
 
   @ApiResponses(Array(
     new ApiResponse(code = 400, message = "Invalid ID"),
@@ -49,5 +78,4 @@ class CarsController @Inject()(cc: ControllerComponents) extends AbstractControl
   def deleteAllCars = Action {
     Ok("Your new application is ready.")
   }
-
 }

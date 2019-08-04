@@ -1,13 +1,12 @@
 package DAO
 
-import java.util.UUID
-import akka.http.scaladsl.model.DateTime
+import java.util.Date
 
-case class Cars(id: UUID,
+case class Cars(id: Int,
                 registration: String,
                 brand: String,
                 model: String,
                 color: String,
-                date_commissioning: DateTime,
+                date_commissioning: Date,
                 price: Float)
 

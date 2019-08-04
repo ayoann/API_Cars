@@ -1,10 +1,9 @@
 package DAO
 
-import java.util.UUID
-import akka.http.scaladsl.model.DateTime
+import java.util.Date
 
-case class Garages(id: UUID,
+case class Garages(id: Int,
                    name: String,
                    adress: String,
-                   creation_date: DateTime,
+                   creation_date: Date,
                    max_cars_capacity: Int)
