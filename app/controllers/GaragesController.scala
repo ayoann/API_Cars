@@ -1,67 +1,85 @@
 package controllers
 
-import java.util.Date
+import java.sql.{Connection, ResultSet}
 
 import DAO.Garages
-import io.swagger.annotations.{Api, ApiParam, ApiResponse, ApiResponses}
+import io.swagger.annotations._
 import javax.inject.Inject
 import play.api.mvc.{AbstractController, ControllerComponents}
 import play.api.db.Database
-import play.libs.Json
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
 
-@Api
+import scala.util.{Failure, Success, Try}
+
+@Api(description = "Endpoint for get nay informations about garages", tags = Array("Garages"))
 class GaragesController @Inject()(cc: ControllerComponents, db: Database) extends AbstractController(cc) {
 
-  implicit val garagesWrites: Writes[Garages] = (
-    (JsPath \ "id").writeNullable[Int] and
-      (JsPath \ "name").write[String] and
-      (JsPath \ "adress").write[String] and
-      (JsPath \ "creation_date").write[java.util.Date] and
-      (JsPath \ "max_cars_capacity").write[Int]
-    )(unlift(Garages.unapply))
-
-  implicit val garagesReaders: Reads[Garages] = (
-    (JsPath \ "id").read(Int) and
-      (JsPath \ "name").read[String] and
-      (JsPath \ "adress").read[String] and
-      (JsPath \ "creation_date").read[java.util.Date] and
-      (JsPath \ "max_cars_capacity").read[Int]
-    )(unlift(Garages.unapply))
+  implicit val garagesReaders = Json.reads[Garages]
+  implicit val garagesWrites = Json.writes[Garages]
 
 
+  val SELECT_ONE_GARAGES = "SELECT * FROM garages where id = ?;"
+
+  @ApiOperation(nickname = "Get Garages by Id",
+    value = "Get oneGarages",
+    response = classOf[Void],
+    httpMethod = "GET")
   @ApiResponses(Array(
+    new ApiResponse(code = 200, message = "Success", response = classOf[Garages]),
     new ApiResponse(code = 400, message = "Invalid ID"),
     new ApiResponse(code = 404, message = "Garages not found")))
   def getOneGaragesById(@ApiParam(value = "ID Garages") id: String) = Action {
-    db.withConnection { connection =>
-      val stmt = connection.createStatement
-      val e = stmt.executeQuery(s"SELECT * FROM GARAGES WHERE id =: $id")
-      Ok(Json.toJson(e))
-    }
+    Ok("hello")
   }
 
+
+  @ApiOperation(nickname = "Add Garages",
+    value = "Add a new Garages",
+    response = classOf[Void],
+    httpMethod = "POST")
   @ApiResponses(Array(
-    new ApiResponse(code = 500, message = "Invalid Request"),
-    new ApiResponse(code = 404, message = "Ressource not found")))
+    new ApiResponse(code = 200, message = "Garages is created"),
+    new ApiResponse(code = 405, message = "Invalid Input")))
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(value = "Garages object that needs to be added", required = true, dataType = "DAO.Garages", paramType = "body")))
   def post = Action {
     Ok("Your new application is ready.")
   }
 
+  @ApiOperation(nickname = "Update a Garages",
+    value = "Update a Garages",
+    response = classOf[Void],
+    httpMethod = "PUT")
   @ApiResponses(Array(
-    new ApiResponse(code = 400, message = "Invalid ID"),
-    new ApiResponse(code = 404, message = "Garages not found"),
-    new ApiResponse(code = 500, message = "Request Invalid")))
+    new ApiResponse(code = 200, message = "Garages is updated"),
+    new ApiResponse(code = 400, message = "Invalid garages supplied"),
+    new ApiResponse(code = 404, message = "Garages not found")))
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(value = "Garages object that needs to be added", required = true, dataType = "DAO.Garages", paramType = "body")))
   def putOneGaragesById(@ApiParam(value = "ID Garages") id: String) = Action {
     Ok("Your new application is ready.")
   }
 
+  @ApiOperation(nickname = "Delete a Garages",
+    value = "Delete a Garages",
+    response = classOf[Void],
+    httpMethod = "DELETE")
   @ApiResponses(Array(
-    new ApiResponse(code = 400, message = "Invalid ID"),
-    new ApiResponse(code = 404, message = "Garages not found"),
-    new ApiResponse(code = 500, message = "Request Invalid")))
-  def deleteOneGaragesById(@ApiParam(value = "ID Garages") id: String) = Action {
+    new ApiResponse(code = 200, message = "Garages is deleted"),
+    new ApiResponse(code = 400, message = "Invalid garages supplied"),
+    new ApiResponse(code = 404, message = "Garages not found")))
+  def deleteOneGaragesById(@ApiParam(value = "ID garages to delete") id: String) = Action {
     Ok("Your new application is ready.")
+  }
+
+
+  private def resultSetGarages(resultSet: ResultSet): Garages = {
+    Garages(
+      resultSet.getInt("id"),
+      resultSet.getString("name"),
+      resultSet.getString("address"),
+      resultSet.getDate("creaton_date"),
+      resultSet.getInt("max_cars_capacity")
+    )
   }
 }

@@ -10,3 +10,4 @@ case class Cars(id: Int,
                 date_commissioning: Date,
                 price: Float)
 
+
