@@ -11,7 +11,7 @@ import play.api.libs.json._
 
 import scala.util.{Failure, Success, Try}
 
-@Api(description = "Endpoint for get nay informations about garages", tags = Array("Garages"))
+@Api(description = "Endpoint for get some informations about garages", tags = Array("Garages"))
 class GaragesController @Inject()(cc: ControllerComponents, db: Database) extends AbstractController(cc) {
 
   implicit val garagesReaders = Json.reads[Garages]
@@ -29,7 +29,22 @@ class GaragesController @Inject()(cc: ControllerComponents, db: Database) extend
     new ApiResponse(code = 400, message = "Invalid ID"),
     new ApiResponse(code = 404, message = "Garages not found")))
   def getOneGaragesById(@ApiParam(value = "ID Garages") id: String) = Action {
-    Ok("hello")
+    db.withConnection { connection: Connection =>
+      Try {
+        val query = SELECT_ONE_GARAGES
+        val stmt = connection.prepareStatement(query)
+        stmt.setObject(1, id)
+        val rs = stmt.executeQuery()
+        if(rs.next()) {
+          resultSetGarages(rs)
+        } else {
+          None
+        }
+      } match {
+        case Success(t) => Ok(Json.toJson(t))
+        case Failure(e) => Ok(e.getMessage)
+      }
+    }
   }
 
 
@@ -42,9 +57,11 @@ class GaragesController @Inject()(cc: ControllerComponents, db: Database) extend
     new ApiResponse(code = 405, message = "Invalid Input")))
   @ApiImplicitParams(Array(
     new ApiImplicitParam(value = "Garages object that needs to be added", required = true, dataType = "DAO.Garages", paramType = "body")))
-  def post = Action {
+  def post = Action { implicit request =>
+    request.body
     Ok("Your new application is ready.")
   }
+
 
   @ApiOperation(nickname = "Update a Garages",
     value = "Update a Garages",
@@ -60,6 +77,7 @@ class GaragesController @Inject()(cc: ControllerComponents, db: Database) extend
     Ok("Your new application is ready.")
   }
 
+
   @ApiOperation(nickname = "Delete a Garages",
     value = "Delete a Garages",
     response = classOf[Void],
@@ -73,13 +91,14 @@ class GaragesController @Inject()(cc: ControllerComponents, db: Database) extend
   }
 
 
-  private def resultSetGarages(resultSet: ResultSet): Garages = {
-    Garages(
+  private def resultSetGarages(resultSet: ResultSet): Option[Garages] = {
+    Option(
+      Garages(
       resultSet.getInt("id"),
       resultSet.getString("name"),
       resultSet.getString("address"),
-      resultSet.getDate("creaton_date"),
+      resultSet.getDate("creation_date"),
       resultSet.getInt("max_cars_capacity")
-    )
+    ))
   }
 }
