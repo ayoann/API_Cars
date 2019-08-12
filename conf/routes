@@ -7,9 +7,9 @@
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 
 #swagger.json
-GET     /swagger.json        controllers.ApiHelpController.getResources
-GET     /docs/                 controllers.Assets.at(path="/public/swagger",file="index.html")
-GET     /docs/*file          controllers.Assets.at(path="/public/swagger",file)
+GET     /swagger.json               controllers.ApiHelpController.getResources
+GET     /docs/                        controllers.Assets.at(path="/public/swagger",file="index.html")
+GET     /docs/*file                      controllers.Assets.at(path="/public/swagger",file)
 
 
 #------------------------ Routes ------------------------------------
@@ -18,13 +18,13 @@ GET     /docs/*file          controllers.Assets.at(path="/public/swagger",file)
 POST    /garages                    controllers.GaragesController.post
 
 #update garages
-PUT     /garages/:id                 controllers.GaragesController.putOneGaragesById(id: String)
+PUT     /garages/:id                controllers.GaragesController.putOneGaragesById(id: String)
 
 #delete a garages
 DELETE  /garages/:id                controllers.GaragesController.deleteOneGaragesById(id: String)
 
 #get a garages
-GET     /garages/:id                 controllers.GaragesController.getOneGaragesById(id: String)
+GET     /garages/:id                controllers.GaragesController.getOneGaragesById(id: String)
 
 #create cars
 POST    /cars                       controllers.CarsController.post

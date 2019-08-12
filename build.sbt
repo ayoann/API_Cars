@@ -10,18 +10,15 @@ resolvers += "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/"
       
 scalaVersion := "2.12.2"
 
-libraryDependencies ++= Seq(jdbc,
-                            ehcache,
+libraryDependencies ++= Seq(ehcache,
                             ws,
                             specs2 % Test,
                             guice,
                             "mysql" % "mysql-connector-java" % "5.1.34",
-                            "io.swagger" %% "swagger-play2" % "1.7.1")
+                            "io.swagger" %% "swagger-play2" % "1.7.1",
+                            "com.typesafe.play" %% "play-slick" % "4.0.2",
+                            "com.typesafe.play" %% "play-slick-evolutions" % "4.0.2")
 
-libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play-slick" % "4.0.2",
-  "com.typesafe.play" %% "play-slick-evolutions" % "4.0.2"
-)
 
 unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )  
 
