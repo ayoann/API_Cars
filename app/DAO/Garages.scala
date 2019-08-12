@@ -7,3 +7,4 @@ case class Garages(id: Int,
                    adress: String,
                    creation_date: Date,
                    max_cars_capacity: Int)
+

@@ -1,25 +1,23 @@
 package controllers
 
-import DAO.Cars
+import DAO.CarsData
 import io.swagger.annotations._
 import javax.inject.Inject
 import play.api.mvc.{AbstractController, ControllerComponents}
-import play.api.libs.json._
+import play.api.db.Database
 
-@Api(description = "Endpoint for get some informations about cars", tags = Array("Cars"))
-class CarsController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
 
-  implicit val carReaders = Json.reads[Cars]
-  implicit val carWrites = Json.writes[Cars]
+@Api(tags = Array("Cars"))
+class CarsController @Inject()(cc: ControllerComponents, db: Database) extends AbstractController(cc) {
 
   @ApiOperation(nickname = "Get cars by Id",
     value = "Get one Cars",
     response = classOf[Void],
     httpMethod = "GET")
   @ApiResponses(Array(
-    new ApiResponse(code = 200, message = "Success", response = classOf[Cars]),
-    new ApiResponse(code = 400, message = "Invalid ID"),
-    new ApiResponse(code = 404, message = "Cars not found")))
+    new ApiResponse(code = 200, message = "Success", response = classOf[CarsData]),
+    new ApiResponse(code = 404, message = "Cars not found"),
+  new ApiResponse(code = 500, message = "Internal server error")))
   def getOneCardById(@ApiParam(value = "ID Cars") id: String) = Action {
     Ok("Your new application is ready.")
   }
@@ -29,7 +27,7 @@ class CarsController @Inject()(cc: ControllerComponents) extends AbstractControl
     response = classOf[Void],
     httpMethod = "GET")
   @ApiResponses(Array(
-    new ApiResponse(code = 200, message = "Success", response = classOf[Cars]),
+    new ApiResponse(code = 200, message = "Success", response = classOf[CarsData]),
     new ApiResponse(code = 400, message = "Invalid ID"),
     new ApiResponse(code = 404, message = "Cars not found")))
   def getAllCars = Action {

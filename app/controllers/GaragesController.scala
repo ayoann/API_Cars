@@ -1,22 +1,13 @@
 package controllers
 
-import java.sql.{Connection, ResultSet}
-
 import DAO.Garages
 import io.swagger.annotations._
 import javax.inject.Inject
 import play.api.mvc.{AbstractController, ControllerComponents}
 import play.api.db.Database
-import play.api.libs.json._
 
-import scala.util.{Failure, Success, Try}
-
-@Api(description = "Endpoint for get some informations about garages", tags = Array("Garages"))
+@Api(tags = Array("Garages"))
 class GaragesController @Inject()(cc: ControllerComponents, db: Database) extends AbstractController(cc) {
-
-  implicit val garagesReaders = Json.reads[Garages]
-  implicit val garagesWrites = Json.writes[Garages]
-
 
   val SELECT_ONE_GARAGES = "SELECT * FROM garages where id = ?;"
 
@@ -26,25 +17,10 @@ class GaragesController @Inject()(cc: ControllerComponents, db: Database) extend
     httpMethod = "GET")
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Success", response = classOf[Garages]),
-    new ApiResponse(code = 400, message = "Invalid ID"),
-    new ApiResponse(code = 404, message = "Garages not found")))
+    new ApiResponse(code = 404, message = "Garages not found"),
+  new ApiResponse(code = 500, message = "Internal Server Error")))
   def getOneGaragesById(@ApiParam(value = "ID Garages") id: String) = Action {
-    db.withConnection { connection: Connection =>
-      Try {
-        val query = SELECT_ONE_GARAGES
-        val stmt = connection.prepareStatement(query)
-        stmt.setObject(1, id)
-        val rs = stmt.executeQuery()
-        if(rs.next()) {
-          resultSetGarages(rs)
-        } else {
-          None
-        }
-      } match {
-        case Success(t) => Ok(Json.toJson(t))
-        case Failure(e) => Ok(e.getMessage)
-      }
-    }
+    Ok("Your new application is ready.")
   }
 
 
@@ -88,17 +64,5 @@ class GaragesController @Inject()(cc: ControllerComponents, db: Database) extend
     new ApiResponse(code = 404, message = "Garages not found")))
   def deleteOneGaragesById(@ApiParam(value = "ID garages to delete") id: String) = Action {
     Ok("Your new application is ready.")
-  }
-
-
-  private def resultSetGarages(resultSet: ResultSet): Option[Garages] = {
-    Option(
-      Garages(
-      resultSet.getInt("id"),
-      resultSet.getString("name"),
-      resultSet.getString("address"),
-      resultSet.getDate("creation_date"),
-      resultSet.getInt("max_cars_capacity")
-    ))
   }
 }
