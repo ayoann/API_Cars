@@ -14,6 +14,11 @@ libraryDependencies ++= Seq( jdbc , ehcache , ws , specs2 % Test , guice)
 
 libraryDependencies += "io.swagger" %% "swagger-play2" % "1.7.1"
 
+libraryDependencies ++= Seq(
+  "com.typesafe.play" %% "play-slick" % "4.0.2",
+  "com.typesafe.play" %% "play-slick-evolutions" % "4.0.2"
+)
+
 unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )  
 
       
