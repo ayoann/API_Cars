@@ -10,6 +10,7 @@ import slick.dbio.Effect.Read
 import slick.jdbc.JdbcProfile
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import dbConfig.profile.api._
 
 case class CarsData(id: UUID,
                     registration: String,
@@ -66,6 +67,17 @@ class CarsRepo @Inject()(protected val dbconfiguration: DatabaseConfigProvider){
     Cars.filter(_.garages === garagesId).delete
 
 
+  def options(): Future[Seq[(String, String)]] = {
+    val query = (
+      for {
+        cars <- cars
+      } yield (cars.id, cars.name).sortBy(_._2)
+
+      db.run(query.result).map(rows => rows.map{ case (id, name) => (id.toString, name)})
+    )
+  }
+
+
 
   private[models] class CarsTable(tag: Tag) extends Table[CarsData](tag, "CARS") {
 
@@ -77,7 +89,7 @@ class CarsRepo @Inject()(protected val dbconfiguration: DatabaseConfigProvider){
     def date_commissioning = column[Date]("date_commissioning")
     def price = column[Float]("PRICE")
 
-    def * = (id, registration, brand, model, color, date_commissioning, price) <> (CarsData, CarsData.unapply)
+    def * = (id, registration, brand, model, color, date_commissioning, price) <> (CarsData.tupled, CarsData.unapply)
     def ? = (id.?, registration.?, brand.?, model.?, color.?, date_commissioning.?, price.?).shaped.<>({ r => import r._; _1.map(_ => CarsData.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
   }
 

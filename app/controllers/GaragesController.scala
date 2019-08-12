@@ -1,7 +1,11 @@
 package controllers
 
-import io.swagger.annotations.{Api, ApiParam, ApiResponse, ApiResponses}
+import io.swagger.annotations._
 import javax.inject.Inject
+import play.api.mvc._
+import DAO.GaragesRepo
+import scala.concurrent.ExecutionContext
+import dbConfig.profile.api._
 
 import scala.concurrent.ExecutionContext
 
@@ -13,7 +17,9 @@ class GaragesController @Inject()(implicit ec: ExecutionContext, garagesRepo: Ga
     new ApiResponse(code = 404, message = "Garages not found")))
   def getOneGaragesById(@ApiParam(value = "ID Garages") id: String) = Action {
     val identifier = Integer.valueOf(id)
-    garagesRepo.findById(identifier).map(garages => Ok(Json.toJson(garages)))
+    garagesRepo.findById(identifier).map(garages => Ok(Json.toJson(garages))).recover{
+      case ex: Exception => InternalServerError(ex.getCause.getMessage)
+    }
   }
 
   @ApiResponses(Array(

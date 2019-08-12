@@ -5,6 +5,7 @@ import javax.inject.Inject
 import play.api.mvc._
 import DAO.CarsRepo
 import scala.concurrent.ExecutionContext
+import dbConfig.profile.api._
 
 @Api
 class CarsController @Inject()(implicit ec: ExecutionContext, carsRepo: CarsRepo, cc: ControllerComponents) extends AbstractController(cc) {

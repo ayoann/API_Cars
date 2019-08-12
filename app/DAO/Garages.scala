@@ -10,6 +10,7 @@ import slick.dbio.Effect.Read
 import slick.jdbc.JdbcProfile
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import dbConfig.profile.api._
 
 case class GaragesData(id: UUID,
                       name: String,
