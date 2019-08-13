@@ -1,12 +1,9 @@
 package DAO
 
-import java.util.{Date, UUID}
+import java.util.Date
 
 import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
-import play.api.libs.json.Writes
-import slick.dbio
-import slick.dbio.Effect.Read
 import slick.jdbc.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
