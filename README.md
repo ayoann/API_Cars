@@ -1,8 +1,8 @@
-##API_Test_Stampyt
+## API_Test_Stampyt
 Repository Development test API for Stampyt
  
-##Development process
-###Build the project
+## Development process
+### Build the project
 
 In first if you don't have sbt please download here https://www.scala-sbt.org/
 
@@ -16,7 +16,7 @@ sbt run
 ```
 You can access to the application in your browser with the url : http://localhost:9000
 
-###Swagger-Ui
+### Swagger-Ui
 You can access the swagger-ui with the route : http://localhost:9000/docs/
 
 ### Formatting
