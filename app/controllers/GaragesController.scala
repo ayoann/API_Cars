@@ -27,7 +27,7 @@ class GaragesController @Inject()(implicit ec: ExecutionContext, garagesRepo: Ga
     garagesRepo.findById(identifier)
       .map {
         case None => NotFound(s"Garages $identifier is not found")
-        case garages@Some(g) => Ok(Json.toJson(g))
+        case Some(garage) => Ok(Json.toJson(garage))
       }.recover {
       case ex: Exception => InternalServerError(ex.getCause.getMessage)
     }
@@ -40,7 +40,7 @@ class GaragesController @Inject()(implicit ec: ExecutionContext, garagesRepo: Ga
     httpMethod = "POST")
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Garages is created"),
-    new ApiResponse(code = 405, message = "Invalid Input")))
+    new ApiResponse(code = 400, message = "Invalid Input")))
   @ApiImplicitParams(Array(
     new ApiImplicitParam(value = "Garages object that needs to be added", required = true, dataType = "DAO.GaragesData", paramType = "body")))
   def post: Action[JsValue] = Action.async(parse.json) { implicit request =>
@@ -66,7 +66,10 @@ class GaragesController @Inject()(implicit ec: ExecutionContext, garagesRepo: Ga
   def putOneGaragesById(@ApiParam(value = "ID Garages") id: String): Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body.validate[GaragesData].map {
       garages => garagesRepo.update(garages)
-        .map(_ => Ok(s"Garages with ${garages.id} is updated"))
+        .map{
+          case None => NotFound(s"Garage $id is not found")
+          case Some(garage)=> Ok(s"Garage ${garage.id} is updated")
+        }
     }.recoverTotal{
       e => Future.successful(BadRequest(s"Error in json : $e"))
     }
@@ -82,7 +85,11 @@ class GaragesController @Inject()(implicit ec: ExecutionContext, garagesRepo: Ga
     new ApiResponse(code = 400, message = "Invalid garages supplied"),
     new ApiResponse(code = 404, message = "Garages not found")))
   def deleteOneGaragesById(@ApiParam(value = "ID garages to delete") id: String): Action[AnyContent] = Action {
-    Ok("Your new application is ready.")
+    /*val identifier = id.toInt
+    garagesRepo.deleteById(identifier).map{
+      case None => NotFound(s"Garages $identifier is not found")
+      case Some(garage) => Ok(s"Garage ${garage.id} id deleted")
+    }*/
+    Ok("")
   }
-
 }

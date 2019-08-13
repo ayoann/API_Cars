@@ -4,7 +4,7 @@ import java.util.Date
 
 import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
-import slick.jdbc.JdbcProfile
+import slick.jdbc.{JdbcProfile, TransactionIsolation}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -16,7 +16,7 @@ class GaragesRepo @Inject()(carsRepo: CarsRepo)(protected val dbConfigProvider: 
   val dbConfig = dbConfigProvider.get[JdbcProfile]
   val db = dbConfig.db
   import dbConfig.profile.api._
-  private val Garages = TableQuery[GaragesTable]
+  val Garages = TableQuery[GaragesTable]
 
   private def _findById(id: Int): DBIO[Option[GaragesData]] =
     Garages.filter(_.id === id).result.headOption
@@ -27,25 +27,27 @@ class GaragesRepo @Inject()(carsRepo: CarsRepo)(protected val dbConfigProvider: 
   def create(garages: GaragesData): Future[String] = {
     db.run(Garages.returning(Garages.map(_.name)) += garages)
   }
-  def update(garages: GaragesData): Future[Int] = {
-    for {
-      _        <- findById(garages.id)
-      update   <- db.run(Garages.update(garages))
-    } yield update
+
+  def update(garages: GaragesData): Future[Option[GaragesData]] = {
+    val query = Garages.filter(_.id === garages.id)
+    val action = for {
+      results        <- query.result.headOption
+      _   <- query.update(garages)
+    } yield results
+    db.run(action.withTransactionIsolation(TransactionIsolation.RepeatableRead))
   }
 
-  /*def deleteById(id: Int): DBIO[Int] = {
-    val query = _findById(id)
-
+  /*def deleteById(id: Int): Future[Option[GaragesData]] = {
+    val query = Garages.filter(_.id === id)
     val interaction = for {
-      garages <- query
+      garages <- query.result.headOption
       _       <- DBIO.sequence(garages.map(g => carsRepo._deleteAllInGarages(g.id)))
-      garagesDeleted <- query.delete
-    } yield garagesDeleted
-    db.run(interaction.transationnally)
+      _ <- query.delete
+    } yield garages
+    db.run(interaction.withTransactionIsolation(TransactionIsolation.RepeatableRead))
   }*/
 
-  private class GaragesTable(tag: Tag) extends Table[GaragesData](tag, "GARAGES") {
+  class GaragesTable(tag: Tag) extends Table[GaragesData](tag, "GARAGES") {
 
     implicit val dateColumnType = MappedColumnType.base[Date, Long](d => d.getTime, d => new Date(d))
 

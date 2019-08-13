@@ -4,10 +4,9 @@ import java.util.Date
 
 import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
-import slick.jdbc.JdbcProfile
+import slick.jdbc.{JdbcProfile, TransactionIsolation}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 case class CarsData(id: Int,
                     registration: String,
@@ -15,15 +14,16 @@ case class CarsData(id: Int,
                     model: String,
                     color: String,
                     date_commissioning: Date,
-                    price: Float)
+                    price: Float,
+                    garagesId: Int)
 
 @Singleton
-class CarsRepo @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) {
+class CarsRepo @Inject()(garagesRepo: GaragesRepo)(protected val dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext)  {
 
   val dbConfig = dbConfigProvider.get[JdbcProfile]
   val db = dbConfig.db
   import dbConfig.profile.api._
-  private val Cars = TableQuery[CarsTable]
+  val Cars = TableQuery[CarsTable]
 
 
   private def _findById(id: Int): DBIO[Option[CarsData]] =
@@ -42,25 +42,31 @@ class CarsRepo @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)
     db.run(Cars returning Cars.map(_.id) += cars)
   }
 
-  /*def put(cars: CarsData): DBIO[Int] = {
-    val query = Cars.filter(_findById(cars.id))
-
-    val update = query.result.head.flatMap{
-      cars => query.update(cars.patch(cars))
-    }
-    db.run(update)
-  }*/
-
-  def deleteById(id: Int): Future[Unit] = {
-    db.run(Cars.filter(_.id === id).delete).map(_ => ())
+  def update(cars: CarsData): Future[Option[CarsData]] = {
+     val query = Cars.filter(_.id === cars.id)
+    val action = for {
+      results <- query.result.headOption
+      _ <- query.update(cars)
+    } yield results
+    db.run(action.withTransactionIsolation(TransactionIsolation.RepeatableRead))
   }
 
-  def deleteAll: Future[Unit] = {
-    db.run(Cars.delete).map(_ => ())
+  def deleteById(id: Int): Future[Option[CarsData]]= {
+    val query = Cars.filter(_.id === id)
+    val action = for {
+      results <- query.result.headOption
+      _ <- query.delete
+    } yield results
+    db.run(action.withTransactionIsolation(TransactionIsolation.RepeatableRead))
   }
 
-  /*def _deleteAllInGarages(garagesId: Int): DBIO[Int] =
-    Cars.filter(_.garages === garagesId).delete*/
+  def deleteAll: Future[Int] = {
+    db.run(Cars.delete)
+  }
+
+  def _deleteAllInGarages(garagesId: Int): DBIO[Int] = {
+    Cars.filter(_.garagesId === garagesId).delete
+  }
 
 
   /*def options(): Future[Seq[(String, String)]] = {
@@ -75,7 +81,7 @@ class CarsRepo @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)
 
 
 
-  private class CarsTable(tag: Tag) extends Table[CarsData](tag, "CARS") {
+  class CarsTable(tag: Tag) extends Table[CarsData](tag, "CARS") {
 
     implicit val dateColumnType = MappedColumnType.base[Date, Long](d => d.getTime, d => new Date(d))
 
@@ -86,8 +92,11 @@ class CarsRepo @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)
     def color = column[String]("COLOR")
     def date_commissioning = column[Date]("date_commissioning")
     def price = column[Float]("PRICE")
+    def garagesId = column[Int]("GARAGESID")
 
-    def * = (id, registration, brand, model, color, date_commissioning, price) <> (CarsData.tupled, CarsData.unapply)
-    def ? = (id.?, registration.?, brand.?, model.?, color.?, date_commissioning.?, price.?).shaped.<>({ r => import r._; _1.map(_ => CarsData.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def garage = foreignKey("garages_fk", garagesId, garagesRepo.Garages)(_.id, onDelete = ForeignKeyAction.Cascade)
+
+    def * = (id, registration, brand, model, color, date_commissioning, price, garagesId) <> (CarsData.tupled, CarsData.unapply)
+    def ? = (id.?, registration.?, brand.?, model.?, color.?, date_commissioning.?, price.?, garagesId.?).shaped.<>({ r => import r._; _1.map(_ => CarsData.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
   }
 }
