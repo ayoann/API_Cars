@@ -15,6 +15,7 @@ libraryDependencies ++= Seq(ehcache,
                             specs2 % Test,
                             guice,
                             "mysql" % "mysql-connector-java" % "5.1.34",
+                            "org.postgresql" % "postgresql" % "9.4.1209",
                             "io.swagger" %% "swagger-play2" % "1.7.1",
                             "com.typesafe.play" %% "play-slick" % "4.0.2",
                             "com.typesafe.play" %% "play-slick-evolutions" % "4.0.2")
