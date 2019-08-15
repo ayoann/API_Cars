@@ -77,10 +77,10 @@ class CarsController @Inject()(implicit ec: ExecutionContext, carsRepo: CarsRepo
     new ApiImplicitParam(value = "Cars object that needs to be added", required = true, dataType = "DAO.CarsData", paramType = "body")))
   def putOneCarsById(@ApiParam(value = "ID Cars") id: String): Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body.validate[CarsData].map {
-      cars => carsRepo.update(cars)
+      cars => carsRepo.update(cars, id)
         .map {
           case None => NotFound(s"Cars $id is not found")
-          case Some(car) => Ok(s"Car ${car.id} is updated")
+          case Some(_) => Ok(s"Car $id is updated")
       }
     }.recoverTotal{
       e => Future.successful(BadRequest(s"Error in json : $e"))
@@ -101,7 +101,7 @@ class CarsController @Inject()(implicit ec: ExecutionContext, carsRepo: CarsRepo
     carsRepo.deleteById(identifier)
       .map{
         case None => NotFound(s"Cars $id is not found")
-        case Some(car) => Ok(s"Car ${car.id} is deleted")
+        case Some(car) => Ok(s"Car $id is deleted")
     }.recover{
       case ex: Exception => InternalServerError(ex.getCause.getMessage)
     }

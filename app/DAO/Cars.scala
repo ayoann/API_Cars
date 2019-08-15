@@ -8,8 +8,7 @@ import slick.jdbc.{JdbcProfile, TransactionIsolation}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class CarsData(id: Int,
-                    registration: String,
+case class CarsData(registration: String,
                     brand: String,
                     model: String,
                     color: String,
@@ -18,12 +17,12 @@ case class CarsData(id: Int,
                     garagesId: Int)
 
 @Singleton
-class CarsRepo @Inject()(garagesRepo: GaragesRepo)(protected val dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext)  {
+class CarsRepo @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext)  {
 
   val dbConfig = dbConfigProvider.get[JdbcProfile]
   val db = dbConfig.db
   import dbConfig.profile.api._
-  val Cars = TableQuery[CarsTable]
+  private val Cars = TableQuery[CarsTable]
 
 
   private def _findById(id: Int): DBIO[Option[CarsData]] =
@@ -33,7 +32,7 @@ class CarsRepo @Inject()(garagesRepo: GaragesRepo)(protected val dbConfigProvide
     db.run(_findById(id))
 
   /*private def _findByName(name: String): Query[CarsTable, CarsData, List] =
-    Cars.filter(_.name === name).to[List]*/
+    CarsData.filter(_.name === name).to[List]*/
 
   def all: Future[List[CarsData]] =
     db.run(Cars.to[List].result)
@@ -42,8 +41,8 @@ class CarsRepo @Inject()(garagesRepo: GaragesRepo)(protected val dbConfigProvide
     db.run(Cars returning Cars.map(_.id) += cars)
   }
 
-  def update(cars: CarsData): Future[Option[CarsData]] = {
-     val query = Cars.filter(_.id === cars.id)
+  def update(cars: CarsData, id: String): Future[Option[CarsData]] = {
+    val query = Cars.filter(_.id === id.toInt)
     val action = for {
       results <- query.result.headOption
       _ <- query.update(cars)
@@ -68,7 +67,6 @@ class CarsRepo @Inject()(garagesRepo: GaragesRepo)(protected val dbConfigProvide
     Cars.filter(_.garagesId === garagesId).delete
   }
 
-
   /*def options(): Future[Seq[(String, String)]] = {
     val query = (
       for {
@@ -79,11 +77,12 @@ class CarsRepo @Inject()(garagesRepo: GaragesRepo)(protected val dbConfigProvide
     )
   }*/
 
-
-
   class CarsTable(tag: Tag) extends Table[CarsData](tag, "CARS") {
 
-    implicit val dateColumnType = MappedColumnType.base[Date, Long](d => d.getTime, d => new Date(d))
+    implicit val DateTimeColumeType =  MappedColumnType.base[java.util.Date,java.sql.Timestamp](
+      { d => java.sql.Timestamp.from( d.toInstant) },
+      { t => Date.from(t.toInstant) }
+    )
 
     def id = column[Int]("ID", O.AutoInc, O.PrimaryKey)
     def registration = column[String]("REGISTRATION")
@@ -92,11 +91,11 @@ class CarsRepo @Inject()(garagesRepo: GaragesRepo)(protected val dbConfigProvide
     def color = column[String]("COLOR")
     def date_commissioning = column[Date]("date_commissioning")
     def price = column[Float]("PRICE")
-    def garagesId = column[Int]("GARAGESID")
+    def garagesId = column[Int]("ID_GARAGES")
 
-    def garage = foreignKey("garages_fk", garagesId, garagesRepo.Garages)(_.id, onDelete = ForeignKeyAction.Cascade)
+    /*def garage = foreignKey("garages_fk", garagesId, garagesRepo.Garages)(_.id, onDelete = ForeignKeyAction.Cascade)*/
 
-    def * = (id, registration, brand, model, color, date_commissioning, price, garagesId) <> (CarsData.tupled, CarsData.unapply)
-    def ? = (id.?, registration.?, brand.?, model.?, color.?, date_commissioning.?, price.?, garagesId.?).shaped.<>({ r => import r._; _1.map(_ => CarsData.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def * = (registration, brand, model, color, date_commissioning, price, garagesId) <> (CarsData.tupled, CarsData.unapply)
+    def ? = (registration.?, brand.?, model.?, color.?, date_commissioning.?, price.?, garagesId.?).shaped.<>({ r => import r._; _1.map(_ => CarsData.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
   }
 }

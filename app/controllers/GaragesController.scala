@@ -65,10 +65,10 @@ class GaragesController @Inject()(implicit ec: ExecutionContext, garagesRepo: Ga
     new ApiImplicitParam(value = "Garages object that needs to be added", required = true, dataType = "DAO.GaragesData", paramType = "body")))
   def putOneGaragesById(@ApiParam(value = "ID Garages") id: String): Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body.validate[GaragesData].map {
-      garages => garagesRepo.update(garages)
+      garages => garagesRepo.update(garages, id)
         .map{
           case None => NotFound(s"Garage $id is not found")
-          case Some(garage)=> Ok(s"Garage ${garage.id} is updated")
+          case Some(garage)=> Ok(s"Garage $id is updated")
         }
     }.recoverTotal{
       e => Future.successful(BadRequest(s"Error in json : $e"))
