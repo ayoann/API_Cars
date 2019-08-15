@@ -78,17 +78,17 @@ class CarsRepo @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)
 
 
 
-  private class CarsTable(tag: Tag) extends Table[CarsData](tag, "CARS") {
+  private class CarsTable(tag: Tag) extends Table[CarsData](tag, "cars") {
 
     implicit val dateColumnType = MappedColumnType.base[Date, Long](d => d.getTime, d => new Date(d))
 
-    def id = column[Int]("ID", O.AutoInc, O.PrimaryKey)
-    def registration = column[String]("REGISTRATION")
-    def brand = column[String]("BRAND")
-    def model = column[String]("MODEL")
-    def color = column[String]("COLOR")
+    def id = column[Int]("id", O.AutoInc, O.PrimaryKey)
+    def registration = column[String]("registration")
+    def brand = column[String]("brand")
+    def model = column[String]("model")
+    def color = column[String]("color")
     def date_commissioning = column[Date]("date_commissioning")
-    def price = column[Float]("PRICE")
+    def price = column[Float]("price")
 
     def * = (id, registration, brand, model, color, date_commissioning, price) <> (CarsData.tupled, CarsData.unapply)
     def ? = (id.?, registration.?, brand.?, model.?, color.?, date_commissioning.?, price.?).shaped.<>({ r => import r._; _1.map(_ => CarsData.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))

@@ -47,15 +47,15 @@ class GaragesRepo @Inject()(carsRepo: CarsRepo)(protected val dbConfigProvider: 
 
 
 
-  private class GaragesTable(tag: Tag) extends Table[GaragesData](tag, "GARAGES") {
+  private class GaragesTable(tag: Tag) extends Table[GaragesData](tag, "garages") {
 
     implicit val dateColumnType = MappedColumnType.base[Date, Long](d => d.getTime, d => new Date(d))
 
-    def id = column[Int]("ID", O.AutoInc, O.PrimaryKey)
-    def name = column[String]("NAME")
-    def adress = column[String]("ADDRESS")
-    def creation_date = column[Date]("CREATION_DATE")
-    def max_cars_capacity = column[Int]("MAX_CARS_CAPACITY")
+    def id = column[Int]("id", O.AutoInc, O.PrimaryKey)
+    def name = column[String]("name")
+    def adress = column[String]("address")
+    def creation_date = column[Date]("creation_date")
+    def max_cars_capacity = column[Int]("max_cars_capacity")
 
     def * = (id, name, adress, creation_date, max_cars_capacity) <> (GaragesData.tupled, GaragesData.unapply)
     def ? = (id.?, name.?, adress.?, creation_date.?, max_cars_capacity.?).shaped.<>({ r => import r._; _1.map(_ => GaragesData.tupled((_1.get, _2.get, _3.get, _4.get, _5.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
