@@ -68,7 +68,7 @@ class GaragesController @Inject()(implicit ec: ExecutionContext, garagesRepo: Ga
       garages => garagesRepo.update(garages, id)
         .map{
           case None => NotFound(s"Garage $id is not found")
-          case Some(garage)=> Ok(s"Garage $id is updated")
+          case Some(_)=> Ok(s"Garage $id is updated")
         }
     }.recoverTotal{
       e => Future.successful(BadRequest(s"Error in json : $e"))
@@ -88,7 +88,7 @@ class GaragesController @Inject()(implicit ec: ExecutionContext, garagesRepo: Ga
     /*val identifier = id.toInt
     garagesRepo.deleteById(identifier).map{
       case None => NotFound(s"Garages $identifier is not found")
-      case Some(garage) => Ok(s"Garage ${garage.id} id deleted")
+      case Some(_) => Ok(s"Garage $identifier id deleted")
     }*/
     Ok("")
   }

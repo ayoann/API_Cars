@@ -16,7 +16,7 @@ class GaragesRepo @Inject()(carsRepo: CarsRepo)(protected val dbConfigProvider: 
   val dbConfig = dbConfigProvider.get[JdbcProfile]
   val db = dbConfig.db
   import dbConfig.profile.api._
-  private val Garages = TableQuery[GaragesTable]
+  val Garages = TableQuery[GaragesTable]
 
   private def _findById(id: Int): DBIO[Option[GaragesData]] =
     Garages.filter(_.id === id).result.headOption
@@ -41,13 +41,13 @@ class GaragesRepo @Inject()(carsRepo: CarsRepo)(protected val dbConfigProvider: 
     val query = Garages.filter(_.id === id)
     val interaction = for {
       garages <- query.result.headOption
-      _       <- DBIO.sequence(garages.map(g => carsRepo._deleteAllInGarages(g.id)))
+      _       <- garages.map(g => carsRepo._deleteAllInGarages(id))
       _ <- query.delete
     } yield garages
-    db.run(interaction.withTransactionIsolation(TransactionIsolation.RepeatableRead))
+    db.run(interaction.transactionally)
   }*/
 
-  class GaragesTable(tag: Tag) extends Table[GaragesData](tag, "GARAGES") {
+  class GaragesTable(tag: Tag) extends Table[GaragesData](tag, "garages") {
 
     implicit val DateTimeColumeType =  MappedColumnType.base[java.util.Date,java.sql.Timestamp](
       { d => java.sql.Timestamp.from( d.toInstant) },

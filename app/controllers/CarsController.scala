@@ -39,9 +39,12 @@ class CarsController @Inject()(implicit ec: ExecutionContext, carsRepo: CarsRepo
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Success", response = classOf[CarsData]),
     new ApiResponse(code = 500, message = "Internal Server Error")))
-  def getAllCars: Action[AnyContent] = Action.async {
-    carsRepo.all.map(cars => Ok(Json.toJson(cars))).recover{
-      case ex: Exception => InternalServerError(ex.getCause.getMessage)
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "color", dataType = "string", paramType = "query")))
+  def getAllCars: Action[AnyContent]  = Action.async { implicit request =>
+   request.getQueryString("color") match {
+      case None => carsRepo.all.map(cars => Ok(Json.toJson(cars)))
+      case Some(color) => carsRepo.findByColor(color).map(car => Ok(Json.toJson(car)))
     }
   }
 
@@ -101,7 +104,7 @@ class CarsController @Inject()(implicit ec: ExecutionContext, carsRepo: CarsRepo
     carsRepo.deleteById(identifier)
       .map{
         case None => NotFound(s"Cars $id is not found")
-        case Some(car) => Ok(s"Car $id is deleted")
+        case Some(_) => Ok(s"Car $id is deleted")
     }.recover{
       case ex: Exception => InternalServerError(ex.getCause.getMessage)
     }
