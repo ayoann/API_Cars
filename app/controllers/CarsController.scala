@@ -6,7 +6,7 @@ import play.api.mvc._
 import DAO.{CarsData, CarsRepo}
 import play.api.libs.json._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Api(tags = Array("Cars"))
 class CarsController @Inject()(implicit ec: ExecutionContext, carsRepo: CarsRepo, cc: ControllerComponents) extends AbstractController(cc) {
@@ -24,8 +24,12 @@ class CarsController @Inject()(implicit ec: ExecutionContext, carsRepo: CarsRepo
     new ApiResponse(code = 500, message = "Internal server error")))
   def getOneCardById(@ApiParam(value = "ID Cars") id: String): Action[AnyContent] = Action.async {
     val identifier = Integer.valueOf(id)
-    carsRepo.findById(identifier).map(
-      cars => Ok(Json.toJson(cars)))
+    carsRepo.findById(identifier).map {
+      case None => NotFound(s"Cars with $id is not found")
+      case Some(car) => Ok(Json.toJson(car))
+    }.recover{
+      case ex: Exception => InternalServerError(ex.getCause.getMessage)
+    }
   }
 
   @ApiOperation(nickname = "Get Cars",
@@ -34,10 +38,11 @@ class CarsController @Inject()(implicit ec: ExecutionContext, carsRepo: CarsRepo
     httpMethod = "GET")
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Success", response = classOf[CarsData]),
-    new ApiResponse(code = 400, message = "Invalid ID"),
-    new ApiResponse(code = 404, message = "Cars not found")))
+    new ApiResponse(code = 500, message = "Internal Server Error")))
   def getAllCars: Action[AnyContent] = Action.async {
-    carsRepo.all.map(cars => Ok(Json.toJson(cars)))
+    carsRepo.all.map(cars => Ok(Json.toJson(cars))).recover{
+      case ex: Exception => InternalServerError(ex.getCause.getMessage)
+    }
   }
 
 
@@ -47,11 +52,16 @@ class CarsController @Inject()(implicit ec: ExecutionContext, carsRepo: CarsRepo
     httpMethod = "POST")
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Cars is created"),
-    new ApiResponse(code = 405, message = "Invalid Input")))
+    new ApiResponse(code = 400, message = "Invalid Input")))
   @ApiImplicitParams(Array(
     new ApiImplicitParam(value = "Cars object that needs to be added", required = true, dataType = "DAO.CarsData", paramType = "body")))
-  def post = Action {
-    Ok("Your new application is ready.")
+  def post: Action[JsValue] = Action.async(parse.json) { implicit request =>
+    request.body.validate[CarsData].map {
+      cars => carsRepo.create(cars)
+          .map(_ => Ok(s"${cars.model} is created"))
+    }.recoverTotal{
+      e => Future.successful(BadRequest(s"Error in json : $e"))
+    }
   }
 
 
@@ -65,8 +75,16 @@ class CarsController @Inject()(implicit ec: ExecutionContext, carsRepo: CarsRepo
     new ApiResponse(code = 404, message = "Cars not found")))
   @ApiImplicitParams(Array(
     new ApiImplicitParam(value = "Cars object that needs to be added", required = true, dataType = "DAO.CarsData", paramType = "body")))
-  def putOneCarsById(@ApiParam(value = "ID Cars") id: String) = Action {
-    Ok("Your new application is ready.")
+  def putOneCarsById(@ApiParam(value = "ID Cars") id: String): Action[JsValue] = Action.async(parse.json) { implicit request =>
+    request.body.validate[CarsData].map {
+      cars => carsRepo.update(cars, id)
+        .map {
+          case None => NotFound(s"Cars $id is not found")
+          case Some(_) => Ok(s"Car $id is updated")
+      }
+    }.recoverTotal{
+      e => Future.successful(BadRequest(s"Error in json : $e"))
+    }
   }
 
 
@@ -76,11 +94,17 @@ class CarsController @Inject()(implicit ec: ExecutionContext, carsRepo: CarsRepo
     httpMethod = "DELETE")
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Cars is deleted"),
-    new ApiResponse(code = 400, message = "Invalid cars supplied"),
-    new ApiResponse(code = 404, message = "Cars not found")))
+    new ApiResponse(code = 404, message = "Cars not found"),
+    new ApiResponse(code = 500, message = "Internal Server Error")))
   def deleteOneCarsById(@ApiParam(value = "ID Car") id: String): Action[AnyContent] = Action.async {
     val identifier = Integer.valueOf(id)
-    carsRepo.deleteById(identifier).map(num => Ok(s"$num cars is deleted"))
+    carsRepo.deleteById(identifier)
+      .map{
+        case None => NotFound(s"Cars $id is not found")
+        case Some(car) => Ok(s"Car $id is deleted")
+    }.recover{
+      case ex: Exception => InternalServerError(ex.getCause.getMessage)
+    }
   }
 
 

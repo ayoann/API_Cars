@@ -4,24 +4,19 @@ import java.util.Date
 
 import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
-import slick.jdbc.JdbcProfile
+import slick.jdbc.{JdbcProfile, TransactionIsolation}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-case class GaragesData(id: Int,
-                      name: String,
-                      adress: String,
-                      creation_date: Date,
-                      max_cars_capacity: Int)
+case class GaragesData(name: String, address: String, creation_date: Date, max_cars_capacity: Int)
 
 @Singleton
-class GaragesRepo @Inject()(carsRepo: CarsRepo)(protected val dbConfigProvider: DatabaseConfigProvider){
+class GaragesRepo @Inject()(carsRepo: CarsRepo)(protected val dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext) {
 
   val dbConfig = dbConfigProvider.get[JdbcProfile]
   val db = dbConfig.db
   import dbConfig.profile.api._
   private val Garages = TableQuery[GaragesTable]
-
 
   private def _findById(id: Int): DBIO[Option[GaragesData]] =
     Garages.filter(_.id === id).result.headOption
@@ -30,35 +25,44 @@ class GaragesRepo @Inject()(carsRepo: CarsRepo)(protected val dbConfigProvider: 
     db.run(_findById(id))
 
   def create(garages: GaragesData): Future[Int] = {
-    db.run(Garages returning Garages.map(_.id) += garages)
+    db.run(Garages.returning(Garages.map(_.id)) += garages)
   }
 
-  /*def deleteById(id: Int): DBIO[Int] = {
-    val query = _findById(id)
+  def update(garages: GaragesData, id: String): Future[Option[GaragesData]] = {
+    val query = Garages.filter(_.id === id.toInt)
+    val action = for {
+      results        <- query.result.headOption
+      _              <- query.update(garages)
+    } yield results
+    db.run(action.withTransactionIsolation(TransactionIsolation.RepeatableRead))
+  }
 
+  /*def deleteById(id: Int): Future[Option[GaragesData]] = {
+    val query = Garages.filter(_.id === id)
     val interaction = for {
-      garages <- query.result
+      garages <- query.result.headOption
       _       <- DBIO.sequence(garages.map(g => carsRepo._deleteAllInGarages(g.id)))
-      garagesDeleted <- query.delete
-    } yield garagesDeleted
-    db.run(interaction.transationnally)
+      _ <- query.delete
+    } yield garages
+    db.run(interaction.withTransactionIsolation(TransactionIsolation.RepeatableRead))
   }*/
 
+  class GaragesTable(tag: Tag) extends Table[GaragesData](tag, "GARAGES") {
 
-
-
-  private class GaragesTable(tag: Tag) extends Table[GaragesData](tag, "garages") {
-
-    implicit val dateColumnType = MappedColumnType.base[Date, Long](d => d.getTime, d => new Date(d))
+    implicit val DateTimeColumeType =  MappedColumnType.base[java.util.Date,java.sql.Timestamp](
+      { d => java.sql.Timestamp.from( d.toInstant) },
+      { t => Date.from(t.toInstant) }
+    )
 
     def id = column[Int]("id", O.AutoInc, O.PrimaryKey)
     def name = column[String]("name")
-    def adress = column[String]("address")
+    def address = column[String]("address")
     def creation_date = column[Date]("creation_date")
     def max_cars_capacity = column[Int]("max_cars_capacity")
 
-    def * = (id, name, adress, creation_date, max_cars_capacity) <> (GaragesData.tupled, GaragesData.unapply)
-    def ? = (id.?, name.?, adress.?, creation_date.?, max_cars_capacity.?).shaped.<>({ r => import r._; _1.map(_ => GaragesData.tupled((_1.get, _2.get, _3.get, _4.get, _5.get))) }, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
+    def * = (name, address, creation_date, max_cars_capacity) <> (GaragesData.tupled, GaragesData.unapply)
+
+    def ? = (name.?, address.?, creation_date.?, max_cars_capacity.?).shaped.<>({ r =>import r._; _1.map(_ => GaragesData.tupled((_1.get, _2.get, _3.get, _4.get)))}, (_: Any) => throw new Exception("Inserting into ? projection not supported."))
   }
 
 }
