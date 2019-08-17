@@ -36,10 +36,10 @@ PUT     /cars/:id                   controllers.CarsController.putOneCarsById(id
 DELETE  /cars/:id                   controllers.CarsController.deleteOneCarsById(id: String)
 
 #delete all cars
-DELETE  /cars                       controllers.CarsController.deleteAllCars
+DELETE  /cars                       controllers.CarsController.deleteAllCars(garagesId: String)
 
 #get a cars
 GET     /cars/:id                   controllers.CarsController.getOneCardById(id: String)
 
-#get all cars
-GET     /cars                       controllers.CarsController.getAllCars
+#get all cars by garages
+GET     /garages/:garagesId/cars    controllers.GaragesController.getAllCars(garagesId: String)

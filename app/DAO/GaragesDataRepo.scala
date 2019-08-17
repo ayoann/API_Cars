@@ -2,16 +2,16 @@ package DAO
 
 import java.util.Date
 
+import Model.GaragesData
 import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
 import slick.jdbc.{JdbcProfile, TransactionIsolation}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class GaragesData(name: String, address: String, creation_date: Date, max_cars_capacity: Int)
 
 @Singleton
-class GaragesRepo @Inject()(carsRepo: CarsRepo)(protected val dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext) {
+class GaragesDataRepo @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext) {
 
   val dbConfig = dbConfigProvider.get[JdbcProfile]
   val db = dbConfig.db
@@ -37,15 +37,9 @@ class GaragesRepo @Inject()(carsRepo: CarsRepo)(protected val dbConfigProvider: 
     db.run(action.withTransactionIsolation(TransactionIsolation.RepeatableRead))
   }
 
-  /*def deleteById(id: Int): Future[Option[GaragesData]] = {
-    val query = Garages.filter(_.id === id)
-    val interaction = for {
-      garages <- query.result.headOption
-      _       <- garages.map(g => carsRepo._deleteAllInGarages(id))
-      _ <- query.delete
-    } yield garages
-    db.run(interaction.transactionally)
-  }*/
+  def deleteById(id: Int): Future[Int] = {
+    db.run(Garages.filter(_.id === id).delete)
+  }
 
   class GaragesTable(tag: Tag) extends Table[GaragesData](tag, "garages") {
 
