@@ -26,9 +26,7 @@ class GaragesController @Inject()(carsRepo: CarsRepo, carsDataRepo: CarsDataRepo
     new ApiResponse(code = 200, message = "Success", response = classOf[Cars]),
     new ApiResponse(code = 500, message = "Internal Server Error")))
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "color", dataType = "string", paramType = "query"),
-    new ApiImplicitParam(name = "min", dataType = "int", paramType = "query"),
-    new ApiImplicitParam(name = "max", dataType = "int", paramType = "query")))
+    new ApiImplicitParam(name = "color", dataType = "string", paramType = "query")))
   def getAllCars(@ApiParam(value = "ID Garages") id: String): Action[AnyContent]  = Action.async { implicit request =>
     val identifier = id.toInt
     request.getQueryString("color") match {
