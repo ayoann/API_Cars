@@ -25,21 +25,11 @@ class CarsRepo @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)
     db.run(_findById(id))
 
   def findByColor(color: String, garagesId: Int): Future[List[Cars]] = {
-    val listCars = CarsTable.filter(_.garagesId === garagesId).to[List]
-    val action = for {
-      results <- listCars.result
-      _       <- listCars.filter(_.color === color).to[List].result
-    } yield results
-    db.run(action.withTransactionIsolation(TransactionIsolation.RepeatableRead))
+    db.run(CarsTable.filter(_.garagesId === garagesId).to[List].filter(_.color === color).to[List].result)
   }
 
   def findByPrice(garagesId: Int, min: Float, max: Float): Future[List[Cars]] = {
-    val query = CarsTable.filter(_.garagesId === garagesId).to[List]
-    val action = for {
-      _             <- query.result
-      results       <- query.filter( c => (c.price >= min && c.price <= max)).to[List].result
-    } yield results
-    db.run(action.withTransactionIsolation(TransactionIsolation.RepeatableRead))
+    db.run(CarsTable.filter(_.garagesId === garagesId).to[List].filter( c => c.price >= min && c.price <= max).to[List].result)
   }
 
 
