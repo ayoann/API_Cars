@@ -2,7 +2,7 @@ package DAO
 
 import java.util.Date
 
-import Model.{CarsData, Garages}
+import Model.CarsData
 import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
 import slick.jdbc.{JdbcProfile, TransactionIsolation}

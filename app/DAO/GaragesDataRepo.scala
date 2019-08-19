@@ -18,11 +18,6 @@ class GaragesDataRepo @Inject()(protected val dbConfigProvider: DatabaseConfigPr
   import dbConfig.profile.api._
   val Garages = TableQuery[GaragesTable]
 
-  private def _findById(id: Int): DBIO[Option[GaragesData]] =
-    Garages.filter(_.id === id).result.headOption
-
-  def findById(id: Int): Future[Option[GaragesData]] =
-    db.run(_findById(id))
 
   def create(garages: GaragesData): Future[Int] = {
     db.run(Garages.returning(Garages.map(_.id)) += garages)
