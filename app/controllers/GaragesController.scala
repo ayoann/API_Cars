@@ -24,13 +24,22 @@ class GaragesController @Inject()(carsRepo: CarsRepo, carsDataRepo: CarsDataRepo
     httpMethod = "GET")
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Success", response = classOf[Cars]),
+    new ApiResponse(code = 404, message = "NotFound"),
     new ApiResponse(code = 500, message = "Internal Server Error")))
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "color", dataType = "string", paramType = "query")))
+    new ApiImplicitParam(name = "color", dataType = "string", paramType = "query"),
+    new ApiImplicitParam(name = "min", dataType = "float", paramType = "query"),
+    new ApiImplicitParam(name = "max", dataType = "float", paramType = "query")))
   def getAllCars(@ApiParam(value = "ID Garages") id: String): Action[AnyContent]  = Action.async { implicit request =>
     val identifier = id.toInt
     request.getQueryString("color") match {
-      case None => carsRepo.all(identifier).map(cars => Ok(Json.toJson(cars)))
+      case None => request.getQueryString("min") match {
+        case None => carsRepo.all(identifier).map(cars => Ok(Json.toJson(cars)))
+        case Some(min) => request.getQueryString("max") match {
+          case None => Future.successful(NotFound("Max is required"))
+          case Some(max) => carsRepo.findByPrice(identifier, min.toFloat, max.head.toFloat).map(car => Ok(Json.toJson(car)))
+        }
+      }
       case Some(color) => carsRepo.findByColor(color, identifier).map(car => Ok(Json.toJson(car)))
     }
   }
