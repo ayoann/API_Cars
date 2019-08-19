@@ -5,7 +5,7 @@ import java.util.Date
 import Model.Cars
 import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
-import slick.jdbc.JdbcProfile
+import slick.jdbc.{JdbcProfile, TransactionIsolation}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,8 +24,15 @@ class CarsRepo @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)
   def findById(id: Int): Future[Option[Cars]] =
     db.run(_findById(id))
 
-  def findByColor(color: String): Future[List[Cars]] =
-    db.run(CarsTable.filter(_.color === color).to[List].result)
+  def findByColor(color: String, garagesId: Int): Future[List[Cars]] = {
+    val listCars = CarsTable.filter(_.garagesId === garagesId).to[List]
+    val action = for {
+      results <- listCars.result
+      _       <- listCars.filter(_.color === color).to[List].result
+    } yield results
+    db.run(action.withTransactionIsolation(TransactionIsolation.RepeatableRead))
+  }
+
 
   def all(garagesId: Int): Future[List[Cars]] =
     db.run(CarsTable.filter(_.garagesId === garagesId).to[List].result)

@@ -68,7 +68,7 @@ class CarsController @Inject()(implicit ec: ExecutionContext, carsDataRepo: Cars
     new ApiResponse(code = 400, message = "Invalid cars supplied"),
     new ApiResponse(code = 404, message = "Cars not found")))
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(value = "Cars object that needs to be added", required = true, dataType = "Model.CarsData", paramType = "body")))
+    new ApiImplicitParam(value = "Cars object that needs to be updated", required = true, dataType = "Model.CarsData", paramType = "body")))
   def putOneCarsById(@ApiParam(value = "ID Cars") id: String): Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body.validate[CarsData].map {
       cars => carsDataRepo.update(cars, id)

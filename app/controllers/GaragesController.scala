@@ -31,13 +31,13 @@ class GaragesController @Inject()(carsRepo: CarsRepo, carsDataRepo: CarsDataRepo
     val identifier = id.toInt
     request.getQueryString("color") match {
       case None => carsRepo.all(identifier).map(cars => Ok(Json.toJson(cars)))
-      case Some(color) => carsRepo.findByColor(color).map(car => Ok(Json.toJson(car)))
+      case Some(color) => carsRepo.findByColor(color, identifier).map(car => Ok(Json.toJson(car)))
     }
   }
 
 
   @ApiOperation(nickname = "Get Garages by Id",
-    value = "Get oneGarages",
+    value = "Get one Garages",
     response = classOf[Void],
     httpMethod = "GET")
   @ApiResponses(Array(
@@ -45,7 +45,7 @@ class GaragesController @Inject()(carsRepo: CarsRepo, carsDataRepo: CarsDataRepo
     new ApiResponse(code = 404, message = "Garages not found"),
     new ApiResponse(code = 500, message = "Internal Server Error")))
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "nbCars", dataType = "boolean", paramType = "query")))
+    new ApiImplicitParam(name = "nbCars", dataType = "boolean", paramType = "query", value="If you want the cars number, put value true")))
   def getOneGaragesById(@ApiParam(value = "ID Garages") id: String): Action[AnyContent] = Action.async {
     implicit request =>
       val identifier = id.toInt
@@ -91,7 +91,7 @@ class GaragesController @Inject()(carsRepo: CarsRepo, carsDataRepo: CarsDataRepo
     new ApiResponse(code = 400, message = "Invalid garages supplied"),
     new ApiResponse(code = 404, message = "Garages not found")))
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(value = "Garages object that needs to be added", required = true, dataType = "Model.GaragesData", paramType = "body")))
+    new ApiImplicitParam(value = "Garages object that needs to be updated", required = true, dataType = "Model.GaragesData", paramType = "body")))
   def putOneGaragesById(@ApiParam(value = "ID Garages") id: String): Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body.validate[GaragesData].map {
       garages => garagesRepo.update(garages, id)
