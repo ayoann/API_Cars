@@ -3,17 +3,20 @@ package controllers
 import io.swagger.annotations._
 import javax.inject.Inject
 import play.api.mvc._
-import DAO.{CarsDataRepo, CarsRepo, GaragesDataRepo}
-import Model.{Cars, GaragesData}
+import DAO.{CarsDataRepo, CarsRepo, GaragesDataRepo, GaragesRepo}
+import Model.{Cars, Garages, GaragesData}
 import play.api.libs.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Api(tags = Array("Garages"))
-class GaragesController @Inject()(carsRepo: CarsRepo, carsDataRepo: CarsDataRepo)(implicit ec: ExecutionContext, garagesRepo: GaragesDataRepo, cc: ControllerComponents) extends AbstractController(cc) {
+class GaragesController @Inject()(carsRepo: CarsRepo, carsDataRepo: CarsDataRepo)(implicit ec: ExecutionContext, garagesDataRepo: GaragesDataRepo, garagesRepo: GaragesRepo, cc: ControllerComponents) extends AbstractController(cc) {
 
-  implicit val garagesWrites = Json.writes[GaragesData]
-  implicit val garagesReads = Json.reads[GaragesData]
+  implicit val garagesDataWrites = Json.writes[GaragesData]
+  implicit val garagesDataReads = Json.reads[GaragesData]
+
+  implicit val garagesWrites = Json.writes[Garages]
+  implicit val garagesReads = Json.reads[Garages]
 
   implicit val carsWrites = Json.writes[Cars]
   implicit val carsReads = Json.reads[Cars]
@@ -50,7 +53,7 @@ class GaragesController @Inject()(carsRepo: CarsRepo, carsDataRepo: CarsDataRepo
     response = classOf[Void],
     httpMethod = "GET")
   @ApiResponses(Array(
-    new ApiResponse(code = 200, message = "Success", response = classOf[GaragesData]),
+    new ApiResponse(code = 200, message = "Success", response = classOf[Garages]),
     new ApiResponse(code = 404, message = "Garages not found"),
     new ApiResponse(code = 500, message = "Internal Server Error")))
   @ApiImplicitParams(Array(
@@ -83,7 +86,7 @@ class GaragesController @Inject()(carsRepo: CarsRepo, carsDataRepo: CarsDataRepo
     new ApiImplicitParam(value = "Garages object that needs to be added", required = true, dataType = "Model.GaragesData", paramType = "body")))
   def post: Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body.validate[GaragesData].map {
-      garages => garagesRepo.create(garages)
+      garages => garagesDataRepo.create(garages)
           .map(_ => Ok(s"${garages.name} is created"))
     }.recoverTotal {
       e => Future.successful(BadRequest(s"Error in json : $e"))
@@ -103,7 +106,7 @@ class GaragesController @Inject()(carsRepo: CarsRepo, carsDataRepo: CarsDataRepo
     new ApiImplicitParam(value = "Garages object that needs to be updated", required = true, dataType = "Model.GaragesData", paramType = "body")))
   def putOneGaragesById(@ApiParam(value = "ID Garages") id: String): Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body.validate[GaragesData].map {
-      garages => garagesRepo.update(garages, id)
+      garages => garagesDataRepo.update(garages, id)
         .map{
           case None => NotFound(s"Garage $id is not found")
           case Some(_)=> Ok(s"Garage $id is updated")
@@ -126,7 +129,7 @@ class GaragesController @Inject()(carsRepo: CarsRepo, carsDataRepo: CarsDataRepo
     val identifier = id.toInt
     for {
       _ <- carsDataRepo.deleteAllCars(identifier)
-      garage <- garagesRepo.deleteById(identifier)
+      garage <- garagesDataRepo.deleteById(identifier)
     } yield garage
     Future.successful(Ok(s"Garages $identifier is deleted"))
   }
